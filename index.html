@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/89/three.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.2/dat.gui.min.js"></script> 
+    <!-- <script src="https://cdn.jsdelivr.net/npm/three-orbitcontrols@2.1.2/OrbitControls.min.js"></script> -->
+  
+    <!-- OPTIONAL - Alternative THREE.OrbitControls script to fix a small conflict with selecting a preset in dat.GUI -->
+    <!-- <script src="https://codepen.io/jhancock532/pen/VdLmvN"></script>  -->
+    <!-- (I commented out line 661, which is event.PreventDefault(); in the onMouseDown function, that's the only change). -->
+    <script src="./musiCube.js"></script>
+  
+  </head>
+  
+  <body>
+  
+    <input type="file" id="audioInput"/>
+    <label for="audioInput" id="audioInputLabel">Choose a sound file.</label>
+    <audio id="sound"></audio>
+  
+  </body>
+
+</html>
+
+
+
