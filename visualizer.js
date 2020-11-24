@@ -3,9 +3,8 @@
 $(document).ready(function () {
     visualizer = new AudioVisualizer();
     visualizer.initialize();
-    visualizer.createBars();
+    visualizer.createHeart();
     visualizer.setupAudioProcessing();
-    visualizer.getAudio();
     visualizer.handleDrop();  
 });
 
@@ -19,7 +18,8 @@ function AudioVisualizer() {
     this.renderer;
     this.controls;
 
-    this.cube;
+    // geometry
+    this.heartMesh;
 
     //audio
     this.javascriptNode;
@@ -46,7 +46,7 @@ AudioVisualizer.prototype.initialize = function () {
 
     //create and add camera
     this.camera = new THREE.PerspectiveCamera(40, WIDTH / HEIGHT, 0.1, 20000);
-    this.camera.position.set(0, 45, 0);
+    this.camera.position.set(0, 100, 0);
     this.scene.add(this.camera);
 
     var that = this;
@@ -65,51 +65,40 @@ AudioVisualizer.prototype.initialize = function () {
     });
 
     //background color of the scene
-    this.renderer.setClearColor(0x333F47, 1);
+    this.renderer.setClearColor(0xffa3df, 1);
 
     // create a light and add it to the scene
     var light = new THREE.PointLight(0xffffff);
-    // light.position.set(-100, 200, 100);
-    light.position.set(-200, 400, 200);
+    light.position.set(-100, 200, 100);
     this.scene.add(light);
 
-    // const light = new THREE.AmbientLight( 0xffffff ); // soft white light
-    // this.scene.add( light );
+    var backLight = new THREE.PointLight(0xffffff);
+    backLight.position.set(100, -200, -100);
+    this.scene.add(backLight);
 
     //Add interation capability to the scene
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
 };
 
-//create the bars required to show the visualization
-AudioVisualizer.prototype.createBars = function () {
+AudioVisualizer.prototype.createHeart = function () {
 
-    // const x = 0, y = 0;
+    const x = -6, y = -6;
 
-    // const heartShape = new THREE.Shape();
+    const heartShape = new THREE.Shape();
 
-    // heartShape.moveTo( x + 5, y + 5 );
-    // heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
-    // heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7,x - 6, y + 7 );
-    // heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 );
-    // heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 );
-    // heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y );
-    // heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
+    heartShape.moveTo( x + 5, y + 5 );
+    heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
+    heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7,x - 6, y + 7 );
+    heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 );
+    heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 );
+    heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y );
+    heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
 
-    // const cubeGeometry = new THREE.ShapeGeometry( heartShape );
-
-    var cubeGeometry = new THREE.BoxGeometry(5, 5, 5);
-    // var cubeGeometry = new THREE.SphereGeometry( 5, 32, 32 );
-
-    var material = new THREE.MeshPhongMaterial({
-        color: this.getRandomColor(),
-        ambient: 0x808080,
-        specular: 0xffffff
-    });
-
-    this.cube = new THREE.Mesh(cubeGeometry, material);
-    this.cube.position.set(0, 0, 0);
-
-    this.scene.add(this.cube);
+    var extrudeSettings = { amount: 1, bevelEnabled: true, bevelSegments: 20, steps: 5, bevelSize: 3, bevelThickness: 4 };
+    var geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings );
+    this.heartMesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: '#ff0022' } ) ); 
+    this.heartMesh.rotation.x = 1.5
+    this.scene.add(this.heartMesh);
 
 };
 
@@ -169,30 +158,16 @@ AudioVisualizer.prototype.setupAudioProcessing = function () {
         visualizer.renderer.render(visualizer.scene, visualizer.camera);
         visualizer.controls.update();
 
-        visualizer.cube.scale.x = bassMax;
-        visualizer.cube.scale.y = bassMax;
-        visualizer.cube.scale.z = bassMax;
+        visualizer.heartMesh.scale.x = bassMax;
+        visualizer.heartMesh.scale.y = bassMax;
+        visualizer.heartMesh.scale.z = bassMax;
 
-        console.log(trebbleAvg)
-        console.log(visualizer.cube)
-        visualizer.cube.material.color.setRGB(trebbleAvg/256, 0, 0)
+        visualizer.heartMesh.material.color.setRGB(trebbleAvg/256, 0, 0)
 
-        visualizer.cube.rotation.x = 1;
+        visualizer.heartMesh.rotation.y += 0.02
 
     }
 
-};
-
-//get the default audio from the server
-AudioVisualizer.prototype.getAudio = function () {
-    var request = new XMLHttpRequest();
-    request.open("GET", "Asset/Aathi-StarMusiQ.Com.mp3", true);
-    request.responseType = "arraybuffer";
-    request.send();
-    var that = this;
-    request.onload = function () {
-        //that.start(request.response);
-    }
 };
 
 //start the audio processing
@@ -208,16 +183,6 @@ AudioVisualizer.prototype.start = function (buffer) {
     function decodeAudioDataFailed() {
         debugger
     }
-};
-
-//util method to get random colors to make stuff interesting
-AudioVisualizer.prototype.getRandomColor = function () {
-    var letters = '0123456789ABCDEF'.split('');
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
 };
 
 AudioVisualizer.prototype.handleDrop = function () {
